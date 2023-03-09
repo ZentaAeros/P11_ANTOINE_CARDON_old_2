@@ -61,3 +61,25 @@ def test_booking_with_more_twelve_points():
     )
 
     assert "Vous ne pouvez pas réserver + de 12 places" in response.data.decode()
+
+
+""" TEST BOOKING COMPETITION : Past, actually... """
+
+
+def test_book_closed_competition():
+    response = client.get(
+        f"/book/{server.competitions[0]['name']}/{server.clubs[0]['name']}"
+    )
+    assert "Cette compétition est déjà passée" in response.data.decode()
+
+
+def test_book_open_competition():
+    response = client.get(
+        f"/book/{server.competitions[1]['name']}/{server.clubs[0]['name']}"
+    )
+    assert response.status_code == 200
+
+
+def test_book_competition_does_not_exist():
+    response = client.get(f"/book/CompetitionDoesNotExist/{server.clubs[0]['name']}")
+    assert "Compétition inexistante." in response.data.decode()

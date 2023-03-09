@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, flash, url_for
 
 
@@ -14,11 +15,26 @@ def loadCompetitions():
         return listOfCompetitions
 
 
+def sort_competition_by_date(competition):
+    past = []
+    actually = []
+
+    for compet in competition:
+        if compet["date"] < datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+            past.append(compet)
+        elif compet["date"] > datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+            actually.append(compet)
+
+    return {"past_compet": past, "actually_compet": actually}
+
+
 app = Flask(__name__)
 app.secret_key = "something_special"
 
 competitions = loadCompetitions()
 clubs = loadClubs()
+
+compet = sort_competition_by_date(competitions)
 
 
 @app.route("/")
@@ -34,15 +50,33 @@ def showSummary():
 
 @app.route("/book/<competition>/<club>")
 def book(competition, club):
-    foundClub = [c for c in clubs if c["name"] == club][0]
-    foundCompetition = [c for c in competitions if c["name"] == competition][0]
-    if foundClub and foundCompetition:
+    try:
+        foundClub = [c for c in clubs if c["name"] == club][0]
+        foundCompetition = [c for c in competitions if c["name"] == competition][0]
+        if foundCompetition["date"] < datetime.now().strftime("%Y-%m-%d %H:%M:%S"):
+            flash("Cette compétition est déjà passée")
+            return render_template(
+                "welcome.html",
+                club=club,
+                past_competitions=compet["past_compet"],
+                actually_competitions=compet["actually_compet"],
+            )
+
+        if foundClub and foundCompetition:
+            return render_template(
+                "booking.html", club=foundClub, competition=foundCompetition
+            )
+        else:
+            flash("Something went wrong-please try again")
+            return render_template("welcome.html", club=club, competitions=competitions)
+    except IndexError:
+        flash("Compétition inexistante.")
         return render_template(
-            "booking.html", club=foundClub, competition=foundCompetition
+            "welcome.html",
+            club=club,
+            past_competitions=compet["past_compet"],
+            actually_competitions=compet["actually_compet"],
         )
-    else:
-        flash("Something went wrong-please try again")
-        return render_template("welcome.html", club=club, competitions=competitions)
 
 
 @app.route("/purchasePlaces", methods=["POST"])
