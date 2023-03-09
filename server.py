@@ -44,8 +44,20 @@ def index():
 
 @app.route("/showSummary", methods=["POST"])
 def showSummary():
-    club = [club for club in clubs if club["email"] == request.form["email"]][0]
-    return render_template("welcome.html", club=club, competitions=competitions)
+    try:
+        club = [club for club in clubs if club["email"] == request.form["email"]][0]
+        return render_template(
+            "welcome.html",
+            club=club,
+            past_competitions=compet["past_compet"],
+            actually_competitions=compet["actually_compet"],
+        )
+    except IndexError:
+        if request.form["email"] == "":
+            flash("Veuillez entrer une adresse mail")
+        else:
+            flash("Compte inexistant")
+        return render_template("index.html"), 401
 
 
 @app.route("/book/<competition>/<club>")
