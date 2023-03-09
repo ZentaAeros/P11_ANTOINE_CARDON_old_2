@@ -13,6 +13,43 @@ server.clubs = [
 ]
 
 
+def test_booking_with_more_points_than_available():
+    server.clubs[0]["points"] = "4"
+
+    response = client.post(
+        "/purchasePlaces",
+        data={
+            "places": 5,
+            "club": server.clubs[0]["name"],
+            "competition": server.competitions[0]["name"],
+        },
+    )
+
+    assert "Solde de points insuffisant" in response.data.decode()
+
+
+""" TEST BOOKING COMPETITION : Check places available... """
+
+
+def test_booking_with_more_than_allowed():
+    server.clubs[0]["points"] = 10
+    server.competitions[0]["numberOfPlaces"] = 6
+
+    response = client.post(
+        "/purchasePlaces",
+        data={
+            "places": 8,
+            "club": server.clubs[0]["name"],
+            "competition": server.competitions[0]["name"],
+        },
+    )
+
+    assert (
+        "Le nombre de place restant est inférieur à votre demande"
+        in response.data.decode()
+    )
+
+
 def test_booking_with_more_twelve_points():
     response = client.post(
         "/purchasePlaces",
