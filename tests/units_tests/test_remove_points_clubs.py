@@ -1,4 +1,10 @@
+from server import app
+import server
+
+
 """ TEST BOOKING COMPETITION : Check clubs points """
+
+client = app.test_client()
 
 
 def test_to_remove_points_clubs():
